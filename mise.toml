@@ -1,0 +1,76 @@
+[tools]
+flutter = "3.22.1-stable"
+
+[env]
+ANDROID_HOME = "/opt/homebrew/share/android-commandlinetools"
+ANDROID_SDK_ROOT = "/opt/homebrew/share/android-commandlinetools"
+ANDROID_USER_HOME = "/Users/stefanbethge/.config/.android"
+ANDROID_AVD_HOME = "/Users/stefanbethge/.config/.android/avd"
+
+[tasks.install]
+description = "Install Flutter pub dependencies"
+run = "flutter pub get"
+
+[tasks.doctor]
+description = "Show Flutter environment diagnostics"
+run = "flutter doctor -v"
+
+[tasks.format]
+description = "Format Dart source files"
+run = "dart format lib test"
+
+[tasks.analyze]
+description = "Run static analysis"
+depends = ["install"]
+run = "flutter analyze"
+
+[tasks.test]
+description = "Run widget and unit tests"
+depends = ["install"]
+run = "flutter test"
+
+[tasks.run]
+description = "Run the app on the selected device"
+depends = ["install"]
+run = "flutter run"
+
+[tasks.run-android]
+description = "Run the app on the local Android emulator"
+depends = ["install"]
+run = "flutter run -d emulator-5554"
+
+[tasks.devices]
+description = "List Flutter devices"
+run = "flutter devices"
+
+[tasks.emulators]
+description = "List available Flutter emulators"
+run = "flutter emulators"
+
+[tasks.emulator-start]
+description = "Start the Android emulator used for local development"
+run = "/opt/homebrew/share/android-commandlinetools/emulator/emulator -avd odoo-timesheet-api-34"
+
+[tasks.build]
+description = "Build the Android APK in release mode"
+depends = ["install"]
+run = "flutter build apk"
+
+[tasks.install-apk]
+description = "Install the release APK on the connected Android emulator or device"
+depends = ["build"]
+run = "/opt/homebrew/share/android-commandlinetools/platform-tools/adb install -r build/app/outputs/flutter-apk/app-release.apk"
+
+[tasks.build-ios]
+description = "Build the iOS app without code signing"
+depends = ["install"]
+run = "flutter build ios --no-codesign"
+
+[tasks.clean]
+description = "Clean Flutter build outputs"
+run = "flutter clean"
+
+[tasks.setup]
+description = "Install dependencies and show doctor output"
+depends = ["install", "doctor"]
+run = "printf 'Flutter workspace ready\\n'"
