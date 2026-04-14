@@ -86,12 +86,11 @@ jobs:
               -destkeystore android/upload-keystore.jks \
               -deststoretype JKS \
               -deststorepass "$ANDROID_KEYSTORE_PASSWORD" \
-              -destkeypass "$ANDROID_KEY_PASSWORD" \
               -destalias "$ANDROID_KEY_ALIAS"
             printf 'storeFile=upload-keystore.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
               "$ANDROID_KEYSTORE_PASSWORD" \
               "$ANDROID_KEY_ALIAS" \
-              "$ANDROID_KEY_PASSWORD" > android/key.properties
+              "$ANDROID_KEYSTORE_PASSWORD" > android/key.properties
           elif [ -n "$ANDROID_KEYSTORE_HEX" ] && [ -n "$ANDROID_KEYSTORE_PASSWORD" ] && [ -n "$ANDROID_KEY_ALIAS" ] && [ -n "$ANDROID_KEY_PASSWORD" ]; then
             printf '%s' "$ANDROID_KEYSTORE_HEX" | tr -d '\r\n' | xxd -r -p > android/upload-keystore.jks
             printf 'storeFile=upload-keystore.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
