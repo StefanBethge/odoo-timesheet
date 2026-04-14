@@ -17,6 +17,11 @@ class LocalSettingsStore implements SettingsStore {
   final SharedPreferences? _preferences;
   final FlutterSecureStorage _secureStorage;
 
+  static const IOSOptions _iosSecretOptions = IOSOptions(
+    accessibility: KeychainAccessibility.unlocked_this_device,
+    synchronizable: false,
+  );
+
   static const _plainKeys = [
     'url',
     'database',
@@ -28,6 +33,7 @@ class LocalSettingsStore implements SettingsStore {
     'weeklyHigh',
     'lockEnabled',
     'biometricUnlockEnabled',
+    'darkMode',
   ];
   static const _secretKeys = ['apiKey', 'webPassword', 'totpSecret'];
 
@@ -41,7 +47,9 @@ class LocalSettingsStore implements SettingsStore {
 
     final secrets = <String, String>{};
     for (final key in _secretKeys) {
-      secrets[key] = await _secureStorage.read(key: key) ?? '';
+      secrets[key] =
+          await _secureStorage.read(key: key, iOptions: _iosSecretOptions) ??
+              '';
     }
 
     return AppSettings.fromMaps(plain, secrets);
@@ -57,7 +65,11 @@ class LocalSettingsStore implements SettingsStore {
 
     final secrets = settings.secretMap();
     for (final entry in secrets.entries) {
-      await _secureStorage.write(key: entry.key, value: entry.value);
+      await _secureStorage.write(
+        key: entry.key,
+        value: entry.value,
+        iOptions: _iosSecretOptions,
+      );
     }
   }
 }

@@ -121,7 +121,7 @@ git remote add origin git@github.com:<owner>/<repo>.git
 git push -u origin HEAD
 ```
 
-3. Add these GitHub repository secrets under `Settings > Secrets and variables > Actions`:
+3. Optionally add these GitHub repository secrets under `Settings > Secrets and variables > Actions` if you want a dedicated Android release keystore in CI:
 
 - `ANDROID_KEYSTORE_BASE64`
 - `ANDROID_KEYSTORE_PASSWORD`
@@ -134,8 +134,11 @@ You can create the Base64 payload from a local keystore with:
 base64 -i my-release-key.jks | pbcopy
 ```
 
-The workflow writes a temporary `android/key.properties` file in CI and uses it
-to sign both the APK and the AAB.
+If these secrets are present, the workflow writes a temporary
+`android/key.properties` file in CI and uses it to sign both the APK and the
+AAB. If they are missing, the release workflow still runs and falls back to the
+debug signing config from the Android project so GitHub release downloads still
+work.
 
 ### Release process
 

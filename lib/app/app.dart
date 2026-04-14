@@ -26,9 +26,12 @@ class _OdooTimesheetAppState extends State<OdooTimesheetApp> {
     return AnimatedBuilder(
       animation: widget.controller,
       builder: (context, _) {
+        final brightness = widget.controller.settings.darkMode
+            ? Brightness.dark
+            : Brightness.light;
         return MaterialApp(
           title: 'Odoo Timesheet',
-          theme: buildAppTheme(),
+          theme: buildAppTheme(brightness: brightness),
           debugShowCheckedModeBanner: false,
           home: _buildHome(),
         );

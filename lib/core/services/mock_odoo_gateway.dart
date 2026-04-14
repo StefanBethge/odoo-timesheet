@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:odoo_timesheet/core/models/app_models.dart';
 import 'package:odoo_timesheet/core/services/odoo_gateway.dart';
+import 'package:odoo_timesheet/core/utils/formatters.dart';
+import 'package:odoo_timesheet/core/utils/fuzzy_search.dart';
 
 class MockOdooGateway implements OdooGateway {
   final Map<String, WeekSnapshot> _weeks = {};
@@ -111,11 +113,7 @@ class MockOdooGateway implements OdooGateway {
     if (q.isEmpty) {
       return source;
     }
-    return source.where((item) {
-      return item.name.toLowerCase().contains(q) ||
-          item.extra.toLowerCase().contains(q) ||
-          item.company.toLowerCase().contains(q);
-    }).toList();
+    return filterSearchItemsFuzzy(source, q);
   }
 
   @override
@@ -163,7 +161,7 @@ class MockOdooGateway implements OdooGateway {
       entries[dayIndex].add(
         TimesheetEntry(
           id: _nextEntryId++,
-          date: monday.add(Duration(days: dayIndex)),
+          date: addDays(monday, dayIndex),
           description: draft.description,
           hours: draft.hours,
           status: 'draft',
@@ -299,7 +297,7 @@ class MockOdooGateway implements OdooGateway {
     ) {
       return TimesheetEntry(
         id: id,
-        date: monday.add(Duration(days: dayIndex)),
+        date: addDays(monday, dayIndex),
         description: description,
         hours: hours,
         status: status,

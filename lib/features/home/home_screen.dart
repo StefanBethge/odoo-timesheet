@@ -58,9 +58,6 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 14),
                 _WeekHeader(controller: controller),
                 const SizedBox(height: 14),
-                if (week != null)
-                  _DayTotalsStrip(controller: controller, week: week),
-                const SizedBox(height: 14),
                 if (week == null)
                   const Center(child: CircularProgressIndicator())
                 else ...[
@@ -104,19 +101,18 @@ class _Backdrop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const DecoratedBox(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Color(0xFFF7F3EB),
-            Color(0xFFE6EFF8),
-            Color(0xFFDDE7F5),
-          ],
+          colors: isDark
+              ? const [Color(0xFF1C1C1E), Color(0xFF1C1C1E)]
+              : const [Color(0xFFF7F3EB), Color(0xFFE6EFF8), Color(0xFFDDE7F5)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
       ),
-      child: SizedBox.expand(),
+      child: const SizedBox.expand(),
     );
   }
 }
@@ -248,85 +244,6 @@ class _WeekHeader extends StatelessWidget {
   }
 }
 
-class _DayTotalsStrip extends StatelessWidget {
-  const _DayTotalsStrip({
-    required this.controller,
-    required this.week,
-  });
-
-  final AppController controller;
-  final WeekSnapshot week;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 112,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: 7,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
-        itemBuilder: (context, index) {
-          final date = week.monday.add(Duration(days: index));
-          final total = week.dayTotal(index);
-          final isToday = mondayFor(DateTime.now()) == week.monday &&
-              DateTime.now().weekday == date.weekday;
-          final color = hoursColor(
-            value: total,
-            settings: controller.settings,
-            context: context,
-          );
-          return Container(
-            width: 104,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isToday ? const Color(0xFF173042) : Colors.white,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color:
-                    isToday ? const Color(0xFF173042) : const Color(0xFFD6E0EA),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  weekdayShortLabel(date),
-                  style: TextStyle(
-                    color: isToday ? Colors.white : const Color(0xFF173042),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '${date.day}',
-                  style: TextStyle(
-                    color: isToday ? Colors.white70 : const Color(0xFF4F6474),
-                    fontSize: 12,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  formatHours(total),
-                  style: TextStyle(
-                    color: isToday ? Colors.white : color,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
 class _DayTimelineCard extends StatelessWidget {
   const _DayTimelineCard({
     required this.controller,
@@ -341,7 +258,7 @@ class _DayTimelineCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final date = week.monday.add(Duration(days: dayIndex));
+    final date = addDays(week.monday, dayIndex);
     final total = week.dayTotal(dayIndex);
     final tasks = List<WeekRow>.from(week.rows)
       ..sort((a, b) => a.label.compareTo(b.label));
@@ -442,7 +359,7 @@ class _DayTaskTile extends StatelessWidget {
     return ListTile(
       onTap: onTap,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      tileColor: Colors.white,
+      tileColor: Theme.of(context).colorScheme.surface,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       leading: CircleAvatar(
         radius: 18,

@@ -100,13 +100,13 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> goToPreviousWeek() async {
-    _selectedMonday = _selectedMonday.subtract(const Duration(days: 7));
+    _selectedMonday = addDays(_selectedMonday, -7);
     notifyListeners();
     await refresh();
   }
 
   Future<void> goToNextWeek() async {
-    _selectedMonday = _selectedMonday.add(const Duration(days: 7));
+    _selectedMonday = addDays(_selectedMonday, 7);
     notifyListeners();
     await refresh();
   }
@@ -122,12 +122,23 @@ class AppController extends ChangeNotifier {
     });
   }
 
+  int _nextLocalId = -1;
+
   Future<void> createEntry({
     required DateTime monday,
     required String rowKey,
     required int dayIndex,
     required EntryDraft draft,
   }) async {
+    final previous = _week;
+    _week = _optimisticAdd(
+      week: _week,
+      rowKey: rowKey,
+      dayIndex: dayIndex,
+      draft: draft,
+      monday: monday,
+    );
+    notifyListeners();
     await _runBusy(() async {
       _week = await _gateway.createEntry(
         settings: _settings,
@@ -136,7 +147,7 @@ class AppController extends ChangeNotifier {
         dayIndex: dayIndex,
         draft: draft,
       );
-    });
+    }, onError: () => _week = previous);
   }
 
   Future<void> updateEntry({
@@ -145,6 +156,14 @@ class AppController extends ChangeNotifier {
     required int entryId,
     required EntryDraft draft,
   }) async {
+    final previous = _week;
+    _week = _optimisticUpdate(
+      week: _week,
+      rowKey: rowKey,
+      entryId: entryId,
+      draft: draft,
+    );
+    notifyListeners();
     await _runBusy(() async {
       _week = await _gateway.updateEntry(
         settings: _settings,
@@ -153,7 +172,7 @@ class AppController extends ChangeNotifier {
         entryId: entryId,
         draft: draft,
       );
-    });
+    }, onError: () => _week = previous);
   }
 
   Future<void> deleteEntry({
@@ -161,6 +180,9 @@ class AppController extends ChangeNotifier {
     required String rowKey,
     required int entryId,
   }) async {
+    final previous = _week;
+    _week = _optimisticRemove(week: _week, rowKey: rowKey, entryId: entryId);
+    notifyListeners();
     await _runBusy(() async {
       _week = await _gateway.deleteEntry(
         settings: _settings,
@@ -168,7 +190,105 @@ class AppController extends ChangeNotifier {
         rowKey: rowKey,
         entryId: entryId,
       );
-    });
+    }, onError: () => _week = previous);
+  }
+
+  WeekSnapshot? _optimisticAdd({
+    required WeekSnapshot? week,
+    required String rowKey,
+    required int dayIndex,
+    required EntryDraft draft,
+    required DateTime monday,
+  }) {
+    if (week == null) return null;
+    return WeekSnapshot(
+      monday: week.monday,
+      rows: [
+        for (final row in week.rows)
+          if (row.key == rowKey)
+            row.copyWith(
+              entriesByDay: [
+                for (var i = 0; i < 7; i++)
+                  if (i == dayIndex)
+                    [
+                      ...row.entriesByDay[i],
+                      TimesheetEntry(
+                        id: _nextLocalId--,
+                        date: addDays(monday, dayIndex),
+                        description: draft.description,
+                        hours: draft.hours,
+                        status: 'draft',
+                        synced: false,
+                      ),
+                    ]
+                  else
+                    row.entriesByDay[i],
+              ],
+            )
+          else
+            row,
+      ],
+    );
+  }
+
+  WeekSnapshot? _optimisticUpdate({
+    required WeekSnapshot? week,
+    required String rowKey,
+    required int entryId,
+    required EntryDraft draft,
+  }) {
+    if (week == null) return null;
+    return WeekSnapshot(
+      monday: week.monday,
+      rows: [
+        for (final row in week.rows)
+          if (row.key == rowKey)
+            row.copyWith(
+              entriesByDay: [
+                for (final dayEntries in row.entriesByDay)
+                  [
+                    for (final e in dayEntries)
+                      if (e.id == entryId)
+                        e.copyWith(
+                          description: draft.description,
+                          hours: draft.hours,
+                          synced: false,
+                        )
+                      else
+                        e,
+                  ],
+              ],
+            )
+          else
+            row,
+      ],
+    );
+  }
+
+  WeekSnapshot? _optimisticRemove({
+    required WeekSnapshot? week,
+    required String rowKey,
+    required int entryId,
+  }) {
+    if (week == null) return null;
+    return WeekSnapshot(
+      monday: week.monday,
+      rows: [
+        for (final row in week.rows)
+          if (row.key == rowKey)
+            row.copyWith(
+              entriesByDay: [
+                for (final dayEntries in row.entriesByDay)
+                  [
+                    for (final e in dayEntries)
+                      if (e.id != entryId) e,
+                  ],
+              ],
+            )
+          else
+            row,
+      ],
+    );
   }
 
   Future<List<SearchItem>> searchItems({
@@ -211,7 +331,10 @@ class AppController extends ChangeNotifier {
     return _unlockService.isBiometricAvailable();
   }
 
-  Future<void> _runBusy(Future<void> Function() action) async {
+  Future<void> _runBusy(
+    Future<void> Function() action, {
+    void Function()? onError,
+  }) async {
     _isBusy = true;
     _errorMessage = null;
     notifyListeners();
@@ -219,6 +342,7 @@ class AppController extends ChangeNotifier {
       await action();
     } catch (error) {
       _errorMessage = error.toString();
+      onError?.call();
     } finally {
       _isBusy = false;
       notifyListeners();

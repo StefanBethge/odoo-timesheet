@@ -4,7 +4,7 @@
 
 - `mise`
 - Android SDK for APK builds
-- Xcode for iOS builds on macOS
+- Xcode and CocoaPods for iOS builds on macOS
 
 ## First-time setup
 
@@ -25,6 +25,8 @@ mise run emulators
 mise run emulator-start
 mise run run
 mise run run-android
+mise run pods
+mise run run-ios
 mise run install-apk
 ```
 
@@ -33,6 +35,7 @@ mise run install-apk
 ```bash
 mise run build
 mise run build-ios
+mise run build-ios-simulator
 ```
 
 `mise run build` currently requires a valid Android SDK in the environment.
@@ -49,6 +52,43 @@ mise run emulators
 mise run emulator-start
 mise run run-android
 ```
+
+## iOS setup
+
+The repository now contains a committed [`Podfile`](./ios/Podfile) and can be
+built for iOS once local Apple tooling is installed.
+
+1. Install Xcode from the App Store.
+2. Select the active developer directory:
+
+```bash
+sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+sudo xcodebuild -runFirstLaunch
+```
+
+3. Install CocoaPods and fetch iOS dependencies:
+
+```bash
+brew install cocoapods
+mise run pods
+```
+
+4. Start the simulator and run the app:
+
+```bash
+open -a Simulator
+mise run run
+```
+
+Choose the iPhone simulator in Flutter's device picker. For unsigned local
+build validation, use `mise run build-ios` or `mise run build-ios-simulator`.
+
+## Security notes
+
+- Android disables app backups in [`AndroidManifest.xml`](./android/app/src/main/AndroidManifest.xml).
+- iOS secrets are stored in Keychain with `unlocked_this_device` in
+  [`settings_store.dart`](./lib/core/services/settings_store.dart), so they do
+  not migrate to another device backup or restore.
 
 ## Code map
 

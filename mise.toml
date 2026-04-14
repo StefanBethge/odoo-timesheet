@@ -61,10 +61,25 @@ description = "Install the release APK on the connected Android emulator or devi
 depends = ["build"]
 run = "/opt/homebrew/share/android-commandlinetools/platform-tools/adb install -r build/app/outputs/flutter-apk/app-release.apk"
 
+[tasks.pods]
+description = "Install iOS CocoaPods dependencies"
+depends = ["install"]
+run = "cd ios && pod install"
+
+[tasks.run-ios]
+description = "Run the app and select an iOS simulator or device in Flutter"
+depends = ["install"]
+run = "flutter run"
+
 [tasks.build-ios]
 description = "Build the iOS app without code signing"
 depends = ["install"]
 run = "flutter build ios --no-codesign"
+
+[tasks.build-ios-simulator]
+description = "Build the iOS simulator app"
+depends = ["install"]
+run = "flutter build ios --simulator"
 
 [tasks.clean]
 description = "Clean Flutter build outputs"

@@ -1,6 +1,8 @@
 import 'package:odoo_timesheet/core/models/app_models.dart';
 import 'package:odoo_timesheet/core/services/odoo_gateway.dart';
 import 'package:odoo_timesheet/core/services/odoo_rpc_client.dart';
+import 'package:odoo_timesheet/core/utils/formatters.dart';
+import 'package:odoo_timesheet/core/utils/fuzzy_search.dart';
 
 class RealOdooGateway implements OdooGateway {
   RealOdooGateway({
@@ -27,12 +29,12 @@ class RealOdooGateway implements OdooGateway {
     final client = _client(settings);
     final currentEntries = await client.listTimesheets(
       dateFrom: monday,
-      dateTo: monday.add(const Duration(days: 6)),
+      dateTo: addDays(monday, 6),
     );
-    final previousMonday = monday.subtract(const Duration(days: 7));
+    final previousMonday = addDays(monday, -7);
     final previousEntries = await client.listTimesheets(
       dateFrom: previousMonday,
-      dateTo: previousMonday.add(const Duration(days: 6)),
+      dateTo: addDays(previousMonday, 6),
     );
 
     final rows = _buildRowsFromTimesheets(monday, currentEntries);
@@ -84,11 +86,7 @@ class RealOdooGateway implements OdooGateway {
       return items;
     }
 
-    return items.where((item) {
-      return item.name.toLowerCase().contains(normalizedQuery) ||
-          item.extra.toLowerCase().contains(normalizedQuery) ||
-          item.company.toLowerCase().contains(normalizedQuery);
-    }).toList(growable: false);
+    return filterSearchItemsFuzzy(items, normalizedQuery);
   }
 
   @override
@@ -120,7 +118,7 @@ class RealOdooGateway implements OdooGateway {
     await _client(settings).createTimesheet(
       projectId: row.projectId,
       taskId: row.taskId ?? 0,
-      date: monday.add(Duration(days: dayIndex)),
+      date: addDays(monday, dayIndex),
       description: draft.description,
       hours: draft.hours,
     );
@@ -205,8 +203,8 @@ class RealOdooGateway implements OdooGateway {
       ...(_pendingRows[_weekKey(monday)] ?? const []),
       ..._extractHints(
         await _client(settings).listTimesheets(
-          dateFrom: monday.subtract(const Duration(days: 7)),
-          dateTo: monday.subtract(const Duration(days: 1)),
+          dateFrom: addDays(monday, -7),
+          dateTo: addDays(monday, -1),
         ),
       ),
     ];
@@ -258,7 +256,7 @@ List<WeekRow> _buildRowsFromTimesheets(
     );
 
     final date = DateTime.parse(record['date'] as String);
-    final dayIndex = date.difference(monday).inDays;
+    final dayIndex = calendarDaysBetween(monday, date);
     if (dayIndex < 0 || dayIndex > 6) {
       continue;
     }

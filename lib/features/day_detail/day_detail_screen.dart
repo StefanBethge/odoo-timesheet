@@ -34,7 +34,7 @@ class DayDetailScreen extends StatelessWidget {
     }
     final resolvedRow = row;
 
-    final date = week.monday.add(Duration(days: dayIndex));
+    final date = addDays(week.monday, dayIndex);
     final entries = resolvedRow.entriesByDay[dayIndex];
 
     return Scaffold(
@@ -53,12 +53,14 @@ class DayDetailScreen extends StatelessWidget {
         label: const Text('Eintrag'),
       ),
       body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFF7F3EB), Color(0xFFE6EFF8)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+        decoration: BoxDecoration(
+          gradient: Theme.of(context).brightness == Brightness.dark
+              ? null
+              : const LinearGradient(
+                  colors: [Color(0xFFF7F3EB), Color(0xFFE6EFF8)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
         ),
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 120),
@@ -188,17 +190,25 @@ class _EntryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+        leading: Icon(
+          entry.synced ? Icons.cloud_done_outlined : Icons.cloud_upload_outlined,
+          color: entry.synced
+              ? theme.colorScheme.primary
+              : theme.colorScheme.outline,
+          size: 20,
+        ),
         title: Text(entry.description),
-        subtitle: Text('ID ${entry.id} · ${entry.status}'),
+        subtitle: Text(entry.synced ? entry.status : 'Wird synchronisiert...'),
         trailing: Wrap(
           spacing: 8,
           children: [
             Text(
               formatHours(entry.hours),
-              style: Theme.of(context).textTheme.titleSmall,
+              style: theme.textTheme.titleSmall,
             ),
             IconButton(
               onPressed: onEdit,

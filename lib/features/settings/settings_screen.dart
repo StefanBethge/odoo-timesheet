@@ -31,6 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late String _bundesland;
   late bool _lockEnabled;
   late bool _biometricUnlockEnabled;
+  late bool _darkMode;
 
   String get _selectedBundesland =>
       AppSettings.normalizeBundesland(_bundesland);
@@ -56,6 +57,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _bundesland = AppSettings.normalizeBundesland(settings.bundesland);
     _lockEnabled = settings.lockEnabled;
     _biometricUnlockEnabled = settings.biometricUnlockEnabled;
+    _darkMode = settings.darkMode;
   }
 
   @override
@@ -84,12 +86,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         automaticallyImplyLeading: !widget.isOnboarding,
       ),
       body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFF7F3EB), Color(0xFFE6EEF8)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+        decoration: BoxDecoration(
+          gradient: theme.brightness == Brightness.dark
+              ? null
+              : const LinearGradient(
+                  colors: [Color(0xFFF7F3EB), Color(0xFFE6EEF8)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
         ),
         child: SafeArea(
           child: Form(
@@ -234,6 +238,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 16),
                 _SectionCard(
+                  title: 'Darstellung',
+                  child: SwitchListTile.adaptive(
+                    value: _darkMode,
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Dark Mode'),
+                    subtitle: const Text(
+                      'Dunkles Farbschema verwenden.',
+                    ),
+                    onChanged: (value) {
+                      setState(() => _darkMode = value);
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _SectionCard(
                   title: 'App-Schutz',
                   child: Column(
                     children: [
@@ -340,6 +359,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       weeklyHigh: double.parse(_weeklyHighController.text.replaceAll(',', '.')),
       lockEnabled: _lockEnabled,
       biometricUnlockEnabled: _biometricUnlockEnabled,
+      darkMode: _darkMode,
     );
 
     await widget.controller.saveSettings(settings);

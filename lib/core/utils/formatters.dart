@@ -26,14 +26,23 @@ const _monthShort = [
   'Dec',
 ];
 
+/// Add [days] to a date, keeping midnight in local time (DST-safe).
+DateTime addDays(DateTime date, int days) =>
+    DateTime(date.year, date.month, date.day + days);
+
+/// Number of calendar days from [from] to [to] (DST-safe).
+int calendarDaysBetween(DateTime from, DateTime to) =>
+    DateTime.utc(to.year, to.month, to.day)
+        .difference(DateTime.utc(from.year, from.month, from.day))
+        .inDays;
+
 DateTime mondayFor(DateTime date) {
   final normalized = DateTime(date.year, date.month, date.day);
-  return normalized
-      .subtract(Duration(days: normalized.weekday - DateTime.monday));
+  return addDays(normalized, DateTime.monday - normalized.weekday);
 }
 
 String formatWeekLabel(DateTime monday) {
-  final sunday = monday.add(const Duration(days: 6));
+  final sunday = addDays(monday, 6);
   final week = isoWeekNumber(monday);
   return 'W$week · ${monday.day} ${monthLabel(monday)} - ${sunday.day} ${monthLabel(sunday)}';
 }
@@ -90,7 +99,7 @@ double parseHours(String raw) {
 }
 
 int isoWeekNumber(DateTime date) {
-  final thursday = date.add(Duration(days: 4 - date.weekday));
+  final thursday = addDays(date, 4 - date.weekday);
   final yearStart = DateTime(thursday.year, 1, 1);
   return ((thursday.difference(yearStart).inDays) / 7).floor() + 1;
 }

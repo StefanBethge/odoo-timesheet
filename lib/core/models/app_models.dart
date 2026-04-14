@@ -37,6 +37,7 @@ class AppSettings {
     required this.weeklyHigh,
     required this.lockEnabled,
     required this.biometricUnlockEnabled,
+    required this.darkMode,
   });
 
   final String url;
@@ -52,6 +53,7 @@ class AppSettings {
   final double weeklyHigh;
   final bool lockEnabled;
   final bool biometricUnlockEnabled;
+  final bool darkMode;
 
   static String normalizeBundesland(String? value) {
     if (value != null && bundeslaender.contains(value)) {
@@ -75,6 +77,7 @@ class AppSettings {
       weeklyHigh: 40,
       lockEnabled: false,
       biometricUnlockEnabled: false,
+      darkMode: false,
     );
   }
 
@@ -99,6 +102,7 @@ class AppSettings {
     double? weeklyHigh,
     bool? lockEnabled,
     bool? biometricUnlockEnabled,
+    bool? darkMode,
   }) {
     return AppSettings(
       url: url ?? this.url,
@@ -115,6 +119,7 @@ class AppSettings {
       lockEnabled: lockEnabled ?? this.lockEnabled,
       biometricUnlockEnabled:
           biometricUnlockEnabled ?? this.biometricUnlockEnabled,
+      darkMode: darkMode ?? this.darkMode,
     );
   }
 
@@ -130,6 +135,7 @@ class AppSettings {
       'weeklyHigh': weeklyHigh.toString(),
       'lockEnabled': lockEnabled.toString(),
       'biometricUnlockEnabled': biometricUnlockEnabled.toString(),
+      'darkMode': darkMode.toString(),
     };
   }
 
@@ -171,6 +177,7 @@ class AppSettings {
       weeklyHigh: parseDouble('weeklyHigh', 40),
       lockEnabled: parseBool('lockEnabled', false),
       biometricUnlockEnabled: parseBool('biometricUnlockEnabled', false),
+      darkMode: parseBool('darkMode', false),
     );
   }
 }
@@ -217,6 +224,7 @@ class TimesheetEntry {
     required this.description,
     required this.hours,
     required this.status,
+    this.synced = true,
   });
 
   final int id;
@@ -224,6 +232,7 @@ class TimesheetEntry {
   final String description;
   final double hours;
   final String status;
+  final bool synced;
 
   TimesheetEntry copyWith({
     int? id,
@@ -231,6 +240,7 @@ class TimesheetEntry {
     String? description,
     double? hours,
     String? status,
+    bool? synced,
   }) {
     return TimesheetEntry(
       id: id ?? this.id,
@@ -238,6 +248,7 @@ class TimesheetEntry {
       description: description ?? this.description,
       hours: hours ?? this.hours,
       status: status ?? this.status,
+      synced: synced ?? this.synced,
     );
   }
 }
