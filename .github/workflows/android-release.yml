@@ -68,6 +68,8 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
+          RUNNER_KEYSTORE_PASSWORD='androidrelease'
+
           if [ -n "$ANDROID_SIGNING_CERT_PEM" ] && [ -n "$ANDROID_SIGNING_PRIVATE_KEY_PEM" ] && [ -n "$ANDROID_KEYSTORE_PASSWORD" ] && [ -n "$ANDROID_KEY_ALIAS" ] && [ -n "$ANDROID_KEY_PASSWORD" ]; then
             printf '%s\n' "$ANDROID_SIGNING_CERT_PEM" > android/release-cert.pem
             printf '%s\n' "$ANDROID_SIGNING_PRIVATE_KEY_PEM" > android/release-key.pem
@@ -76,21 +78,21 @@ jobs:
               -in android/release-cert.pem \
               -inkey android/release-key.pem \
               -out android/upload-keystore.p12 \
-              -passout "pass:$ANDROID_KEYSTORE_PASSWORD"
+              -passout "pass:$RUNNER_KEYSTORE_PASSWORD"
             keytool -importkeystore \
               -noprompt \
               -srckeystore android/upload-keystore.p12 \
               -srcstoretype PKCS12 \
-              -srcstorepass "$ANDROID_KEYSTORE_PASSWORD" \
+              -srcstorepass "$RUNNER_KEYSTORE_PASSWORD" \
               -srcalias "$ANDROID_KEY_ALIAS" \
               -destkeystore android/upload-keystore.jks \
               -deststoretype JKS \
-              -deststorepass "$ANDROID_KEYSTORE_PASSWORD" \
+              -deststorepass "$RUNNER_KEYSTORE_PASSWORD" \
               -destalias "$ANDROID_KEY_ALIAS"
             printf 'storeFile=upload-keystore.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
-              "$ANDROID_KEYSTORE_PASSWORD" \
+              "$RUNNER_KEYSTORE_PASSWORD" \
               "$ANDROID_KEY_ALIAS" \
-              "$ANDROID_KEYSTORE_PASSWORD" > android/key.properties
+              "$RUNNER_KEYSTORE_PASSWORD" > android/key.properties
           elif [ -n "$ANDROID_KEYSTORE_HEX" ] && [ -n "$ANDROID_KEYSTORE_PASSWORD" ] && [ -n "$ANDROID_KEY_ALIAS" ] && [ -n "$ANDROID_KEY_PASSWORD" ]; then
             printf '%s' "$ANDROID_KEYSTORE_HEX" | tr -d '\r\n' | xxd -r -p > android/upload-keystore.jks
             printf 'storeFile=upload-keystore.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
